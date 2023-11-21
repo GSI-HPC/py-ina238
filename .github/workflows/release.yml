@@ -1,22 +1,17 @@
-name: build
+name: release
 
 on:
   push:
     tags:
     - "v*.*.*"
-    branches:
-    - main
-  pull_request:
-    branches:
-    - main
 
 concurrency:
   group: build-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
-  pure-python:
-    name: Build a pure Python wheel and sdist
+  build:
+    name: Build wheel and sdist
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -36,14 +31,12 @@ jobs:
         path: dist/*
         if-no-files-found: error
 
-  pypi-publish:
+  publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs: pure-python
     environment:
       name: pypi-publish
-      url: https://pypi.org/p/py-ina238
     permissions:
       id-token: write
     steps:
@@ -53,5 +46,3 @@ jobs:
         path: dist
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        skip_existing: true
