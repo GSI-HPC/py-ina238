@@ -1,5 +1,5 @@
 [project]
-name = 'py-ina238'
+name = 'ina238'
 description = 'Python driver for TI INA238 Power Monitor (https://www.ti.com/product/INA238)'
 authors = [
   { name = 'Dennis Klein', email = 'd.klein@gsi.de' },
