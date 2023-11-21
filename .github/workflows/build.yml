@@ -1,0 +1,57 @@
+name: build
+
+on:
+  push:
+    tags:
+    - "v*.*.*"
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+concurrency:
+  group: build-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  pure-python:
+    name: Build a pure Python wheel and source distribution
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+    - uses: actions/setup-python@v4
+      with:
+        cache: 'pip'
+    - name: Print Python version
+      run: python --version
+    - name: Install build dependencies
+      run: pip install hatch
+    - name: Build
+      run: hatch build
+    - uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: dist/*
+        if-no-files-found: error
+
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    environment:
+      name: pypi-publish
+      url: https://pypi.org/p/py-ina238
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: artifacts
+        path: dist
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip_existing: true

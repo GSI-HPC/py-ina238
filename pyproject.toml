@@ -1,12 +1,32 @@
 [project]
 name = 'py-ina238'
 description = 'Python driver for TI INA238 Power Monitor (https://www.ti.com/product/INA238)'
-author = 'Dennis Klein'
-author_email = 'd.klein@gsi.de'
+authors = [
+  { name = 'Dennis Klein', email = 'd.klein@gsi.de' },
+  { name = 'Alexey Rybalchenko', email = 'a.rybalchenko@gsi.de' },
+  { name = 'Christian Tacke', email = 'c.tacke@gsi.de' },
+]
 license = 'LGPL-3.0-only'
-url = 'https://github.com/GSI-HPC/py-ina238'
+readme = "README.md"
+url = 'https://gsi-hpc.github.io/py-ina238'
 dynamic = ['version']
 requires-python = '>=3.6'
+classifiers = [
+  'Development Status :: 4 - Beta',
+  'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
+  'Programming Language :: Python',
+  'Programming Language :: Python :: 3.6',
+  'Programming Language :: Python :: 3.7',
+  'Programming Language :: Python :: 3.8',
+  'Programming Language :: Python :: 3.9',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Topic :: System :: Hardware :: Hardware Drivers',
+  'Topic :: System :: Monitoring',
+  'Intended Audience :: Developers',
+  'Intended Audience :: Science/Research',
+  'Intended Audience :: System Administrators',
+]
 dependencies = [
   'Adafruit-Blinka',
   # 'click',
@@ -15,16 +35,24 @@ dependencies = [
   # 'tomli',
 ]
 
+[project.urls]
+Issues = 'https://github.com/GSI-HPC/py-ina238/issues'
+Source = 'https://github.com/GSI-HPC/py-ina238'
+
 [build-system]
 requires = ['hatchling']
 build-backend = 'hatchling.build'
 
-[tool.hatch.build]
-sources = ['ti']
-
 [tool.hatch.version]
 path = 'ti/__init__.py'
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  '/.github',
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ['ti']
 
 # test environment
 [tool.hatch.envs.test]
