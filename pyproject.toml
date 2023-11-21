@@ -4,7 +4,7 @@ description = 'Python driver for TI INA238 Power Monitor (https://www.ti.com/pro
 authors = [
   { name = 'Dennis Klein', email = 'd.klein@gsi.de' },
   { name = 'Alexey Rybalchenko', email = 'a.rybalchenko@gsi.de' },
-  { name = 'Christian Tacke', email = 'c.tacke@gsi.de' },
+  { name = 'Christian Tacke' },
 ]
 license = 'LGPL-3.0-only'
 readme = "README.md"
