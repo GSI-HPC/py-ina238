@@ -1,0 +1,78 @@
+[project]
+name = 'py-ina238'
+description = 'Python driver for TI INA238 Power Monitor (https://www.ti.com/product/INA238)'
+author = 'Dennis Klein'
+author_email = 'd.klein@gsi.de'
+license = 'LGPL-3.0-only'
+url = 'https://github.com/GSI-HPC/py-ina238'
+dynamic = ['version']
+requires-python = '>=3.6'
+dependencies = [
+  'Adafruit-Blinka',
+  # 'click',
+  # 'httpx',
+  # 'rich',
+  # 'tomli',
+]
+
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+
+[tool.hatch.build]
+sources = ['ti']
+
+[tool.hatch.version]
+path = 'ti/__init__.py'
+
+
+# test environment
+[tool.hatch.envs.test]
+dependencies = [
+  'coverage[toml]',
+  'pytest',
+  'pytest-cov',
+  'mypy',
+  'flake8',
+  'pylint',
+]
+
+[tool.hatch.envs.test.scripts]
+coverage = '''pytest \
+  --no-header \
+  --cov-report=term-missing:skip-covered \
+  --cov-config=pyproject.toml \
+  --cov=ti --no-cov-on-fail \
+  --cov-fail-under=20
+  '''
+typechecker = 'mypy --check-untyped-defs ti/'
+lint1 = 'flake8 ti/'
+lint2 = 'pylint ti/'
+all = ['coverage',  'typechecker', 'lint1', 'lint2']
+allf = ['- coverage',  '- typechecker', '- lint1', '- lint2']
+
+[[tool.hatch.envs.test.matrix]]
+python = ['36', '37', '38', '39', '310', '311']
+
+
+# docs environment
+[tool.hatch.envs.docs]
+detached = true
+dependencies = [
+  'sphinx',
+  'sphinx_toolbox',
+  'extras_require',
+  'sphinxemoji',
+  'sphinx-notfound-page',
+  'sphinx_copybutton',
+  'default_values',
+  'toctree_plus',
+  'sphinx_debuginfo',
+  'sphinx_licenseinfo',
+  'seed_intersphinx_mapping',
+  'html_section',
+]
+
+[tool.hatch.envs.docs.scripts]
+build = 'sphinx-build -b html docs docs/build'
+serve = 'python3 -m http.server --bind localhost --directory docs/build 8000'
