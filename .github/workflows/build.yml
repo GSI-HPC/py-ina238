@@ -43,6 +43,7 @@ jobs:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    needs: pure-python
     environment:
       name: pypi-publish
       url: https://pypi.org/p/py-ina238
