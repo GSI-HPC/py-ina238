@@ -34,7 +34,7 @@ jobs:
   publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
-    needs: pure-python
+    needs: build
     environment:
       name: pypi-publish
     permissions:
