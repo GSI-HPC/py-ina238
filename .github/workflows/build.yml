@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   pure-python:
-    name: Build a pure Python wheel and source distribution
+    name: Build a pure Python wheel and sdist
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -24,6 +24,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@v4
       with:
+        python-version: '3.10'
         cache: 'pip'
     - name: Print Python version
       run: python --version
