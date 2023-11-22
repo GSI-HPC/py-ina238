@@ -1,83 +1,88 @@
-github_username = 'GSI-HPC'
-github_repository = 'py-ina238'
-author = 'Dennis Klein'
-project = 'ina238'
-copyright = '2023 GSI Helmholtz Zentrum fuer Schwerionenforschung GmbH'
-language = 'en'
-package_root = 'ti'
+import os
+from sphinx.ext.apidoc import main as sphinx_apidoc
+import sys
+
+
+_ROOT = os.path.abspath("../src")
+sys.path.insert(0, _ROOT)
+
+github_username = "GSI-HPC"
+github_repository = "py-ina238"
+author = "Dennis Klein"
+project = "ina238"
+copyright = "2023 GSI Helmholtz Zentrum fuer Schwerionenforschung GmbH"
+language = "en"
 extensions = [
-    'sphinx_toolbox',
-    'sphinx_toolbox.more_autodoc',
-    'sphinx_toolbox.more_autosummary',
-    #  'sphinx_toolbox.documentation_summary',
-    'sphinx_toolbox.tweaks.param_dash',
-    'sphinx_toolbox.tweaks.latex_layout',
-    'sphinx_toolbox.tweaks.latex_toc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinxcontrib.extras_require',
-    'sphinx.ext.todo',
-    'sphinxemoji.sphinxemoji',
-    'notfound.extension',
-    'sphinx_copybutton',
-    'sphinxcontrib.default_values',
-    #  'sphinxcontrib.toctree_plus',
-    'sphinx_debuginfo',
-    'sphinx_licenseinfo',
-    'seed_intersphinx_mapping',
-    'html_section',
-    #  'sphinx_toolbox_experimental.autosummary_widths',
-    #  'sphinx_toolbox_experimental.succinct_seealso',
-    #  'sphinx_toolbox_experimental.needspace',
-    #  'sphinx_toolbox_experimental.missing_xref',
-    #  'sphinx_toolbox_experimental.changelog',
-    #  'sphinx_toolbox_experimental.peps',
+    "sphinx_toolbox",
+    "sphinx_toolbox.more_autodoc",
+    "sphinx_toolbox.more_autosummary",
+    "sphinx_toolbox.tweaks.param_dash",
+    "sphinx_toolbox.tweaks.latex_layout",
+    "sphinx_toolbox.tweaks.latex_toc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinxcontrib.extras_require",
+    "sphinx.ext.todo",
+    "sphinxemoji.sphinxemoji",
+    "notfound.extension",
+    "sphinx_copybutton",
+    "sphinxcontrib.default_values",
+    "sphinx_debuginfo",
+    "sphinx_licenseinfo",
+    "html_section",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.githubpages",
+    "sphinx_multiversion",
+    "sphinx.ext.extlinks",
 ]
-sphinxemoji_style = 'twemoji'
-gitstamp_fmt = '%d %b %Y'
-templates_path = [ '_templates',]
-#  html_static_path = [ '_static',]
-source_suffix = '.rst'
-master_doc = 'index'
-suppress_warnings = [ 'image.nonlocal_uri',]
-pygments_style = 'default'
-html_theme = 'classic'
+sphinxemoji_style = "twemoji"
+gitstamp_fmt = "%d %b %Y"
+templates_path = [
+    "_templates",
+]
+source_suffix = ".rst"
+master_doc = "index"
+suppress_warnings = [
+    "image.nonlocal_uri",
+]
+pygments_style = "default"
+html_theme = "sphinx_rtd_theme"
 html_show_sourcelink = True
 toctree_plus_types = [
-    'class',
-    'confval',
-    'data',
-    'directive',
-    'enum',
-    'exception',
-    'flag',
-    'function',
-    'namedtuple',
-    'protocol',
-    'role',
-    'typeddict',
+    "class",
+    "confval",
+    "data",
+    "directive",
+    "enum",
+    "exception",
+    "flag",
+    "function",
+    "namedtuple",
+    "protocol",
+    "role",
+    "typeddict",
 ]
 add_module_names = False
 hide_none_rtype = True
 all_typevars = True
-overloads_location = 'bottom'
-html_codeblock_linenos_style = 'table'
-autodoc_exclude_members = [
-    '__dict__',
-    '__class__',
-    '__dir__',
-    '__weakref__',
-    '__module__',
-    '__annotations__',
-    '__orig_bases__',
-    '__parameters__',
-    '__subclasshook__',
-    '__init_subclass__',
-    '__attrs_attrs__',
-    '__init__',
-    '__new__',
-    '__getnewargs__',
-    '__abstractmethods__',
-    '__hash__',
-]
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+overloads_location = "bottom"
+html_codeblock_linenos_style = "table"
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+smv_tag_whitelist = r"^v[1-9]\d*\.\d+\.\d+$"
+smv_branch_whitelist = r"^main$"
+smv_remote_whitelist = None
+smv_released_pattern = r"^refs/tags/.*$"
+smv_outputdir_format = "{ref.name}"
+html_theme_options = {
+    "display_version": False,
+    "prev_next_buttons_location": "both",
+}
+display_github = True
+github_url = "https://github.com/GSI-HPC/py-ina238"
+extlinks = {
+    "datasheet": (
+        "https://www.ti.com/document-viewer/INA238/datasheet/%s",
+        "Datasheet[%s]",
+    )
+}

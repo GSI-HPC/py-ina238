@@ -10,3 +10,4 @@ print(pmd.power_limit)
 pmd.power_limit = 42
 print(pmd.power_limit)
 print(pmd.power_limit)
+# print(pmd.power_limit)

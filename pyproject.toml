@@ -91,10 +91,11 @@ dependencies = [
   'toctree_plus',
   'sphinx_debuginfo',
   'sphinx_licenseinfo',
-  'seed_intersphinx_mapping',
   'html_section',
+  'sphinx-rtd-theme',
+  'sphinx-multiversion',
 ]
 
 [tool.hatch.envs.docs.scripts]
-build = 'sphinx-build -b html docs docs/build'
+build = 'sphinx-multiversion docs docs/build'
 serve = 'python3 -m http.server --bind localhost --directory docs/build 8000'
