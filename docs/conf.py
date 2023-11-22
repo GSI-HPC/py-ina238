@@ -1,7 +1,7 @@
 github_username = 'GSI-HPC'
 github_repository = 'py-ina238'
 author = 'Dennis Klein'
-project = 'py-in238'
+project = 'ina238'
 copyright = '2023 GSI Helmholtz Zentrum fuer Schwerionenforschung GmbH'
 language = 'en'
 package_root = 'ti'

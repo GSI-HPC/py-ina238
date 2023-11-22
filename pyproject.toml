@@ -27,13 +27,7 @@ classifiers = [
   'Intended Audience :: Science/Research',
   'Intended Audience :: System Administrators',
 ]
-dependencies = [
-  'Adafruit-Blinka',
-  # 'click',
-  # 'httpx',
-  # 'rich',
-  # 'tomli',
-]
+dependencies = []
 
 [project.urls]
 Issues = 'https://github.com/GSI-HPC/py-ina238/issues'

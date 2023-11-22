@@ -10,12 +10,6 @@ linux I2C bus via the ftdi_sio kernel driver, but this is not (yet?) upstreamed 
 the vanilla linux kernel, see https://krinkinmu.github.io/2020/09/06/ftdi-i2c.html.
 """
 
-import os
-
-os.environ["BLINKA_FT232H"] = "1"
-
-from adafruit_bus_device import i2c_device
-import board  # import AFTER setting the env variable
 from collections import namedtuple
 
 
@@ -43,32 +37,51 @@ class INA238:
     _MANUFACTURERER_ID = Register(address=0x3E, size=16)  # Manufacturere ID
     _DEVICE_ID = Register(address=0x3F, size=16)  # Device ID
 
-    _I2C_BUS_ADDR = 0x40  # see CurrentMonitor_V0.kicad_sch and Datasheet Table 7-2
-
     _BYTE_SIZE = 8
+    _BYTE_ORDER = "big"
 
-    def __init__(self):
-        self._i2c = i2c_device.I2CDevice(board.I2C(), self._I2C_BUS_ADDR)
-
-    def _read_register(self, register: Register) -> bytearray:
-        """Datasheet Figures 7-9 and 7-8"""
-        with self._i2c as i2c:
-            i2c.write(bytes([register.address & 0xFF]))
-            result = bytearray(register.size // self._BYTE_SIZE)
-            i2c.readinto(result)
-            return result
+    def __init__(self, i2c_slave_port):
+        if not i2c_slave_port:
+            raise RuntimeError("I2C slave port required")
+        self._i2c = i2c_slave_port
+        self._reg = self._MANUFACTURERER_ID
 
     def _write_register(self, register: Register, value: int) -> None:
         """Datasheet Figure 7-7"""
-        with self._i2c as i2c:
-            i2c.write(bytes([register.address & 0xFF, value & 0xFF]))
+        self._i2c.write(
+            [register.address]
+            + list(
+                value.to_bytes(
+                    register.size // self._BYTE_SIZE, byteorder=self._BYTE_ORDER
+                )
+            )
+        )
+
+    def _read(self) -> bytearray:
+        """Datasheet Figures 7-8"""
+        return bytearray(self._i2c.read(self._reg.size // self._BYTE_SIZE))
+
+    def _set_register_address(self, register: Register) -> None:
+        """Datasheet Figures 7-9"""
+        self._i2c.write([register.address])
+        self._reg = register
+
+    def _read_register(self, register: Register) -> bytearray:
+        if self._reg != register:
+            self._set_register_address(register)
+        return self._read()
+
+    def _int_from_bytes(self, data: bytearray, **kwargs) -> int:
+        if not "byteorder" in kwargs:
+            kwargs["byteorder"] = self._BYTE_ORDER
+        return int.from_bytes(data, **kwargs)
 
     @property
     def power_limit(self) -> int:
         """Datasheet 7.6.1.15 POL - This limit compares directly against the value from the
         POWER register to determine if an over power conditions exists.
         """
-        return int.from_bytes(self._read_register(self._PWR_LIMIT))
+        return self._int_from_bytes(self._read_register(self._PWR_LIMIT), signed=False)
 
     @power_limit.setter
     def power_limit(self, value: int) -> None:
