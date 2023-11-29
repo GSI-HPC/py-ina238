@@ -8,17 +8,12 @@ Python driver for the
 Latest release:
 
 ```bash
-pip install py-ina238
-```
-
-From git clone:
-```bash
-git clone https://github.com/GSI-HPC/py-ina238
-cd py-ina238
-pip install -e .
+pip install ina238
 ```
 
 ## License
+
+Copyright 2023 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH, Darmstadt, Germany
 
 `py-ina238` is distributed under the terms of the
 [GNU LGPLv3](https://choosealicense.com/licenses/lgpl-3.0).
