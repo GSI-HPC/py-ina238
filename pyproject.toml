@@ -1,6 +1,7 @@
 [project]
 name = 'ina238'
 description = 'Python driver for TI INA238 Power Monitor (https://www.ti.com/product/INA238)'
+version = "0.0.1"
 authors = [
   { name = 'Dennis Klein', email = 'd.klein@gsi.de' },
   { name = 'Alexey Rybalchenko', email = 'a.rybalchenko@gsi.de' },
@@ -9,7 +10,6 @@ authors = [
 license = 'LGPL-3.0-only'
 readme = "README.md"
 url = 'https://gsi-hpc.github.io/py-ina238'
-dynamic = ['version']
 requires-python = '>=3.6'
 classifiers = [
   'Development Status :: 4 - Beta',
@@ -38,13 +38,8 @@ Source = 'https://github.com/GSI-HPC/py-ina238'
 requires = ['hatchling']
 build-backend = 'hatchling.build'
 
-[tool.hatch.version]
-path = 'src/ti/__init__.py'
-
 [tool.hatch.build.targets.sdist]
-exclude = [
-  '/.github',
-]
+exclude = ['/.github']
 
 [tool.hatch.build.targets.wheel]
 packages = ['src/ti']
@@ -75,7 +70,7 @@ all = ['coverage',  'typechecker', 'lint1', 'lint2']
 allf = ['- coverage',  '- typechecker', '- lint1', '- lint2']
 
 [[tool.hatch.envs.test.matrix]]
-python = ['36', '37', '38', '39', '310', '311']
+python = ['310', '311']
 
 
 # docs environment

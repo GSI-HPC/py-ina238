@@ -7,7 +7,6 @@ from typing import Any
 
 BYTE_SIZE: int = 8  #: Bit
 BYTE_ORDER: str = "big"  #: `Big-Endian <https://en.wikipedia.org/wiki/Endianness>`_
-VERSION: str = "0.0.1"  #: ina238 package version
 
 
 @dataclass
