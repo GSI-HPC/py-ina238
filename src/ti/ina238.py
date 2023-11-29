@@ -202,7 +202,7 @@ class Driver:
                     new.initial_convdly // Resolution.INITIAL_CONVDLY,
                     f.INITIAL_CONVDLY,
                 )
-                | self._encode_field(int(new.adc_range == True), f.ADC_RANGE),
+                | self._encode_field(int(new.adc_range.value), f.ADC_RANGE),
             )
             self._config = new
 
