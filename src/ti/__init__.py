@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH, Darmstadt, Germany
+#
+# SPDX-License-Identifier: LGPL-3.0-only
+
 """`Texas Instruments <https://www.ti.com>`_ devices"""
 
 

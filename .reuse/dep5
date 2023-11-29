@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: py-ina238
+Upstream-Contact: Dennis Klein <d.klein@gsi.de>
+Source: https://gsi-hpc.github.io/py-ina238/
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
