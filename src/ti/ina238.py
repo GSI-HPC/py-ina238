@@ -289,7 +289,7 @@ class Driver:
     def get_current(self) -> float:
         """7.6.1.7 Current Result (CURRENT)"""
         assert self._current_lsb != None
-        return self.int_from_bytes(self.read_register(DIETEMP), signed=True) * self._current_lsb
+        return self.int_from_bytes(self.read_register(CURRENT), signed=True) * self._current_lsb
 
     def get_power(self) -> int:
         """7.6.1.8 Power Result (POWER)"""
