@@ -68,7 +68,7 @@ class ADCRange(Enum):
 class Config:
     """CONFIG device register fields"""
 
-    initial_convdly: int  #: ms
+    initial_convdly: int
     adc_range: ADCRange
 
     RESET_BIT       = ti.Field(offset=15, width=1)
@@ -94,6 +94,26 @@ class ADCConfig:
     AVG_COUNT = ti.Field(offset=0,  width=3)
 
 
+@dataclass
+class ShuntCal:
+    """SHUNT_CAL device register fields"""
+
+    shunt_cal: int
+
+    SHUNT_CAL = ti.Field(offset=0, width=15)
+    RESERVED  = 0b1000_0000_0000_0000
+
+
+@dataclass
+class DieTemp:
+    """DIETEMP device register fields"""
+
+    dietemp: int
+
+    DIETEMP = ti.Field(offset=4, width=12)
+    RESERVED = 0b0000_0000_0000_1111
+
+
 class Resolution:
     VSHUNT_LOW: float     =   5.  #: µV
     VSHUNT_HIGH: float    =   1.25  #: µV
@@ -104,10 +124,10 @@ class Resolution:
 
 CONFIG            = ti.Register(address=0x0, fields=Config)
 ADC_CONFIG        = ti.Register(address=0x1, fields=ADCConfig)
-SHUNT_CAL         = ti.Register(address=0x2)
+SHUNT_CAL         = ti.Register(address=0x2, fields=ShuntCal)
 VSHUNT            = ti.Register(address=0x4)
 VBUS              = ti.Register(address=0x5)
-DIETEMP           = ti.Register(address=0x6)
+DIETEMP           = ti.Register(address=0x6, fields=DieTemp)
 CURRENT           = ti.Register(address=0x7)
 POWER             = ti.Register(address=0x8, size=24)
 DIAG_ALRT         = ti.Register(address=0xB)
@@ -128,13 +148,13 @@ class Driver:
     :datasheet:`Datasheet 7.6.1 INA238 Device Registers <GUID-25B37629-8261-48D8-BE56-62622C36C345#TITLE-SBOSA20INA229>`
     """
 
-    MANUFACTURERER_ID = 0x5449
     DEVICE_ID = 0x2381
 
     def __init__(self, i2c_slave_port):
         if not i2c_slave_port:
             raise RuntimeError("I2C slave port required")
         self._i2c = i2c_slave_port
+        self._current_lsb = None
         self.set_register_address(VSHUNT)
         self.get_config()
         self.get_adc_config()
@@ -236,9 +256,45 @@ class Driver:
                 | self._encode_field(new.vbus, f.VBUS)
                 | self._encode_field(new.vshunt, f.VSHUNT)
                 | self._encode_field(new.dietemp, f.DIETEMP)
-                | self._encode_field(new.avg_count, f.AVG_COUNT),
+                | self._encode_field(new.avg_count, f.AVG_COUNT)
             )
-            self._config = new
+            self._adc_config = new
+
+    def get_shunt_calibration(self) -> int:
+        """Datasheet 7.6.1.3 SHUNT_CAL"""
+        raw = self.int_from_bytes(self.read_register(SHUNT_CAL))
+        f = SHUNT_CAL.fields
+
+        return self._decode_field(raw, f.SHUNT_CAL)
+
+    def set_shunt_calibration(self, r_shunt_ohm: float, max_expected_current_ampere: float):
+        """Datasheet 7.6.1.3 SHUNT_CAL and 8.2.1 Current and Power Calculations"""
+        assert r_shunt_ohm > 0.
+        assert max_expected_current_ampere > 0.
+
+        self._current_lsb = max_expected_current_ampere / (2 ** 15)
+        shunt_cal = 819.2 * (10 ** 6) * self._current_lsb * r_shunt_ohm
+        if self._config.adc_range == ADCRange.LOW:
+            shunt_cal = shunt_cal * 4
+
+        self.write_register(SHUNT_CAL, int(shunt_cal))
+
+    def get_die_temperature(self) -> int:
+        """Datasheet 7.6.1.6 DIETEMP"""
+        raw = self.int_from_bytes(self.read_register(DIETEMP), signed=True)
+        f = DIETEMP.fields
+
+        return self._decode_field(raw, f.DIETEMP) * Resolution.DIETEMP
+
+    def get_current(self) -> float:
+        """7.6.1.7 Current Result (CURRENT)"""
+        assert self._current_lsb != None
+        return self.int_from_bytes(self.read_register(DIETEMP), signed=True) * self._current_lsb
+
+    def get_power(self) -> int:
+        """7.6.1.8 Power Result (POWER)"""
+        assert self._current_lsb != None
+        return self.int_from_bytes(self.read_register(POWER)) * self._current_lsb * 0.2
 
     def reset(self) -> None:
         """Reset the device"""
@@ -273,7 +329,7 @@ class Driver:
     def get_manufacturer_id(self) -> int:
         """Datasheet 7.6.1.16 MANFID - Reads back 'Texas Instruments'"""
         id = int.from_bytes(self.read_register(MANUFACTURERER_ID))
-        assert self.MANUFACTURERER_ID == id
+        assert ti.MANUFACTURERER_ID == id
         return id
 
     def get_device_id(self) -> int:

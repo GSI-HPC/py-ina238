@@ -11,6 +11,7 @@ from typing import Any
 
 BYTE_SIZE: int = 8  #: Bit
 BYTE_ORDER: str = "big"  #: `Big-Endian <https://en.wikipedia.org/wiki/Endianness>`_
+MANUFACTURER_ID = 0x5449
 
 
 @dataclass

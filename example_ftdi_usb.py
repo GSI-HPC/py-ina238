@@ -22,8 +22,6 @@ print(pm.get_config())
 pm.set_config(adc_range=ti.ina238.ADCRange.LOW, initial_convdly=42)
 
 print(pm.get_adc_config())
-pm.reset()
-print(pm.get_adc_config())
 pm.set_adc_config(mode=ti.ina238.Mode.CONTINUOUS_VBUS_VSHUNT_DIETEMP,
                   vbus=ti.ina238.ConversionTime.T_4120_US,
                   vshunt=ti.ina238.ConversionTime.T_4120_US,
@@ -31,5 +29,10 @@ pm.set_adc_config(mode=ti.ina238.Mode.CONTINUOUS_VBUS_VSHUNT_DIETEMP,
                   avg_count=ti.ina238.Samples.AVG_256)
 print(pm.get_adc_config())
 
+print(pm.get_shunt_calibration())
+pm.set_shunt_calibration(r_shunt_ohm=0.04, max_expected_current_ampere=2.5)
+print(pm.get_shunt_calibration())
 print(pm.get_shunt_voltage())
-print(pm.get_shunt_voltage())
+print(pm.get_bus_voltage())
+print(pm.get_current())
+print(pm.get_power())
