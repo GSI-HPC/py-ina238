@@ -4,7 +4,7 @@
 
 [run]
 source =
-    ti
+    src
     tests
 branch = True
 
