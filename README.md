@@ -6,6 +6,8 @@ SPDX-License-Identifier: LGPL-3.0-only
 
 # py-ina238
 
+[![PyPI](https://img.shields.io/pypi/v/ina238)](https://pypi.org/project/ina238/)
+
 Python driver for the
 [Texas Instruments INA238 85-V, 16-Bit, High-Precision Power Monitor With I2C Interface](https://www.ti.com/product/INA238)
 
