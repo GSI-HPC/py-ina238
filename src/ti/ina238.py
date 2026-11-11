@@ -186,12 +186,13 @@ class Driver:
         if not i2c_slave_port:
             raise RuntimeError("I2C slave port required")
         self._i2c = i2c_slave_port
+        self._config = None
         self._current_lsb = None
         self._reg = None
         self._r_shunt_ohm = None
         self._max_expected_current_ampere = None
-        self.get_config()
-        self.get_adc_config()
+        self.set_config_from_device_state()
+        self.set_adc_config_from_device_state()
 
     def write_register(self, register: ti.Register, value: int) -> None:
         """:datasheet:`Datasheet 7.5.1.1 Figure 7-7 <GUID-664FB773-438B-4197-AD9C-C336B45EE590#TITLE-SBOSA20T4877401-6>`"""
@@ -202,7 +203,7 @@ class Driver:
             )
         )
         self._reg = register
-        
+
     def read(self) -> bytearray:
         """:datasheet:`Datasheet 7.5.1.1 Figure 7-8 <GUID-664FB773-438B-4197-AD9C-C336B45EE590#TITLE-SBOSA20T4877401-6>`"""
         return bytearray(self._i2c.read(readlen=self._reg.size // ti.BYTE_SIZE))
@@ -233,7 +234,11 @@ class Driver:
         return (decoded & (~(~0 << field.width))) << field.offset
 
     def get_config(self) -> Config:
-        """Read the CONFIG device register"""
+        """get current Driver configuration"""
+        return self._config
+
+    def set_config_from_device_state(self) -> Config:
+        """Read the CONFIG device register and update the driver configuration accordingly"""
         f = CONFIG.fields
         raw = self.int_from_bytes(self.read_register(CONFIG))
         assert 0 == raw & f.RESERVED
@@ -241,12 +246,10 @@ class Driver:
         delay = self._decode_field(raw, f.INITIAL_CONVDLY) * Resolution.INITIAL_CONVDLY
         adc_range = ADCRange(bool(self._decode_field(raw, f.ADC_RANGE)))
 
-        if ADCRange.HIGH == adc_range:
-            self._vshunt_res = Resolution.VSHUNT_LOW
-        else:
-            self._vshunt_res = Resolution.VSHUNT_HIGH
-
         self._config = f(initial_convdly=delay, adc_range=adc_range)
+
+        if self._r_shunt_ohm != None and self._max_expected_current_ampere != None:
+            self.set_shunt_calibration(self._r_shunt_ohm,self._max_expected_current_ampere)
 
         return self._config
 
@@ -264,15 +267,16 @@ class Driver:
                 | self._encode_field(int(new.adc_range.value), f.ADC_RANGE),
             )
             self._config = new
-            if ADCRange.HIGH == new.adc_range:
-                self._vshunt_res = Resolution.VSHUNT_LOW
-            else:
-                self._vshunt_res = Resolution.VSHUNT_HIGH            
+         
             if self._r_shunt_ohm != None and self._max_expected_current_ampere != None:
                 self.set_shunt_calibration(self._r_shunt_ohm,self._max_expected_current_ampere)
 
     def get_adc_config(self) -> ADCConfig:
         """Datasheet 7.6.1.2 ADC_CONFIG"""
+        return self._adc_config
+
+    def set_adc_config_from_device_state(self) -> ADCConfig:
+        """Datasheet 7.6.1.2 read the ADC_CONFIG device register and update the driver configuration accordingly"""
         raw = self.int_from_bytes(self.read_register(ADC_CONFIG))
         f = ADC_CONFIG.fields
 
@@ -366,14 +370,15 @@ class Driver:
         """Reset the device"""
         f = CONFIG.fields
         self.write_register(CONFIG, self._encode_field(0x1, f.RESET_BIT))
-        self.get_config()
-        self.get_adc_config()
+        self.set_config_from_device_state()
+        self.set_adc_config_from_device_state()
 
     def get_shunt_voltage(self) -> float:
         """7.6.1.4 Shunt Voltage Measurement (VSHUNT) - returns µV"""
+        res = Resolution.VSHUNT_LOW if ADCRange.HIGH == self._config.adc_range else Resolution.VSHUNT_HIGH
         return (
             self.int_from_bytes(self.read_register(VSHUNT), signed=True)
-            * self._vshunt_res
+            * res
         )
 
     def get_bus_voltage(self) -> float:
