@@ -74,7 +74,7 @@ class Config:
     RESET_BIT       = ti.Field(offset=15, width=1)
     INITIAL_CONVDLY = ti.Field(offset=6,  width=8)
     ADC_RANGE       = ti.Field(offset=4,  width=1)
-    RESERVED        = 0b1100_0000_0010_1111
+    RESERVED        = 0b0100_0000_0010_1111
 
 
 @dataclass
@@ -113,6 +113,38 @@ class DieTemp:
     DIETEMP = ti.Field(offset=4, width=12)
     RESERVED = 0b0000_0000_0000_1111
 
+@dataclass
+class DiagAlrt:
+    """DIAG_ALRT device register fields"""
+    alatch: bool
+    cnvr: bool
+    slowalert: bool
+    apol: bool
+    mathof: bool
+    tmpol: bool
+    shntol: bool
+    shntul: bool
+    busol: bool
+    busul: bool
+    pol: bool
+    cnvrf: bool
+    memstat: bool
+
+    ALATCH      = ti.Field(offset=15, width=1)
+    CNVR      = ti.Field(offset=14,  width=1)
+    SLOWALERT    = ti.Field(offset=13,  width=1)
+    APOL   = ti.Field(offset=12,  width=1)
+    MATHOF = ti.Field(offset=9,  width=1)
+    TMPOL = ti.Field(offset=7,  width=1)
+    SHNTOL = ti.Field(offset=6,  width=1)
+    SHNTUL = ti.Field(offset=5,  width=1)
+    BUSOL = ti.Field(offset=4,  width=1)
+    BUSUL = ti.Field(offset=3,  width=1)
+    POL = ti.Field(offset=2,  width=1)
+    CNVRF = ti.Field(offset=1,  width=1)        
+    MEMSTAT = ti.Field(offset=0,  width=1)  
+
+    RESERVED = 0b0000_1101_0000_0000
 
 class Resolution:
     VSHUNT_LOW: float     =   5.  #: µV
@@ -130,7 +162,7 @@ VBUS              = ti.Register(address=0x5)
 DIETEMP           = ti.Register(address=0x6, fields=DieTemp)
 CURRENT           = ti.Register(address=0x7)
 POWER             = ti.Register(address=0x8, size=24)
-DIAG_ALRT         = ti.Register(address=0xB)
+DIAG_ALRT         = ti.Register(address=0xB, fields=DiagAlrt)
 SOVL              = ti.Register(address=0xC)
 SUVL              = ti.Register(address=0xD)
 BOVL              = ti.Register(address=0xE)
@@ -155,7 +187,9 @@ class Driver:
             raise RuntimeError("I2C slave port required")
         self._i2c = i2c_slave_port
         self._current_lsb = None
-        self.set_register_address(VSHUNT)
+        self._reg = None
+        self._r_shunt_ohm = None
+        self._max_expected_current_ampere = None
         self.get_config()
         self.get_adc_config()
 
@@ -167,7 +201,8 @@ class Driver:
                 value.to_bytes(register.size // ti.BYTE_SIZE, byteorder=ti.BYTE_ORDER)
             )
         )
-
+        self._reg = register
+        
     def read(self) -> bytearray:
         """:datasheet:`Datasheet 7.5.1.1 Figure 7-8 <GUID-664FB773-438B-4197-AD9C-C336B45EE590#TITLE-SBOSA20T4877401-6>`"""
         return bytearray(self._i2c.read(readlen=self._reg.size // ti.BYTE_SIZE))
@@ -229,6 +264,12 @@ class Driver:
                 | self._encode_field(int(new.adc_range.value), f.ADC_RANGE),
             )
             self._config = new
+            if ADCRange.HIGH == new.adc_range:
+                self._vshunt_res = Resolution.VSHUNT_LOW
+            else:
+                self._vshunt_res = Resolution.VSHUNT_HIGH            
+            if self._r_shunt_ohm != None and self._max_expected_current_ampere != None:
+                self.set_shunt_calibration(self._r_shunt_ohm,self._max_expected_current_ampere)
 
     def get_adc_config(self) -> ADCConfig:
         """Datasheet 7.6.1.2 ADC_CONFIG"""
@@ -278,20 +319,45 @@ class Driver:
             shunt_cal = shunt_cal * 4
 
         self.write_register(SHUNT_CAL, int(shunt_cal))
+        self._r_shunt_ohm = r_shunt_ohm
+        self._max_expected_current_ampere = max_expected_current_ampere
 
     def get_die_temperature(self) -> int:
         """Datasheet 7.6.1.6 DIETEMP"""
         raw = self.int_from_bytes(self.read_register(DIETEMP), signed=True)
         f = DIETEMP.fields
+        val = self._decode_field(raw, f.DIETEMP)
+        if val & 0x800:
+            val -= 0x1000
+        return val * Resolution.DIETEMP
 
-        return self._decode_field(raw, f.DIETEMP) * Resolution.DIETEMP
+    def get_diag(self) -> DiagAlrt:
+        f = DIAG_ALRT.fields
+        raw = self.int_from_bytes(self.read_register(DIAG_ALRT))
+        assert 0 == raw & f.RESERVED
+
+        return f(
+            alatch    = bool(self._decode_field(raw, f.ALATCH)),
+            cnvr      = bool(self._decode_field(raw, f.CNVR)),
+            slowalert = bool(self._decode_field(raw, f.SLOWALERT)),
+            apol      = bool(self._decode_field(raw, f.APOL)),
+            mathof    = bool(self._decode_field(raw, f.MATHOF)),
+            tmpol     = bool(self._decode_field(raw, f.TMPOL)),
+            shntol    = bool(self._decode_field(raw, f.SHNTOL)),
+            shntul    = bool(self._decode_field(raw, f.SHNTUL)),
+            busol     = bool(self._decode_field(raw, f.BUSOL)),
+            busul     = bool(self._decode_field(raw, f.BUSUL)),
+            pol       = bool(self._decode_field(raw, f.POL)),
+            cnvrf     = bool(self._decode_field(raw, f.CNVRF)),
+            memstat   = bool(self._decode_field(raw, f.MEMSTAT)),
+        )
 
     def get_current(self) -> float:
         """7.6.1.7 Current Result (CURRENT)"""
         assert self._current_lsb != None
         return self.int_from_bytes(self.read_register(CURRENT), signed=True) * self._current_lsb
 
-    def get_power(self) -> int:
+    def get_power(self) -> float:
         """7.6.1.8 Power Result (POWER)"""
         assert self._current_lsb != None
         return self.int_from_bytes(self.read_register(POWER)) * self._current_lsb * 0.2
@@ -301,15 +367,16 @@ class Driver:
         f = CONFIG.fields
         self.write_register(CONFIG, self._encode_field(0x1, f.RESET_BIT))
         self.get_config()
+        self.get_adc_config()
 
-    def get_shunt_voltage(self) -> int:
+    def get_shunt_voltage(self) -> float:
         """7.6.1.4 Shunt Voltage Measurement (VSHUNT) - returns µV"""
         return (
             self.int_from_bytes(self.read_register(VSHUNT), signed=True)
             * self._vshunt_res
         )
 
-    def get_bus_voltage(self) -> int:
+    def get_bus_voltage(self) -> float:
         """7.6.1.5 Bus Voltage Measurement (VBUS) Register - returns mV"""
         return (
             self.int_from_bytes(self.read_register(VBUS), signed=True) * Resolution.VBUS
